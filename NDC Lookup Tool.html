@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NCD Drug Lookup Tool</title>
+
+<!-- PapaParse for proper CSV parsing -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        padding: 40px;
+        background: #f4f6fc;
+    }
+    h1 {
+        color: #1847cc;
+        margin-bottom: 8px;
+    }
+    #searchBox {
+        padding: 12px;
+        width: 300px;
+        border: 2px solid #bfd1ff;
+        border-radius: 6px;
+        font-size: 16px;
+        margin-right: 8px;
+    }
+    #btnSearch {
+        padding: 12px 22px;
+        background: #1847cc;
+        color: white;
+        border: none;
+        font-weight: bold;
+        border-radius: 6px;
+        cursor: pointer;
+    }
+    #btnSearch:hover {
+        background: #0d34a8;
+    }
+    table {
+        margin-top: 28px;
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+    }
+    th, td {
+        padding: 12px;
+        border: 1px solid #d9e1f5;
+        text-align: left;
+        font-size: 14px;
+    }
+    th {
+        background: #e8edff;
+        font-weight: bold;
+        color: #1b2278;
+    }
+    #msg {
+        margin-top: 18px;
+        color: red;
+        font-weight: bold;
+        display: none;
+    }
+</style>
+
+</head>
+<body>
+
+<h1>NCD Drug Lookup Tool</h1>
+<p>Enter Procedure / HCPCS / J‑Code:</p>
+
+<input id="searchBox" placeholder="Example: J7327" />
+<button id="btnSearch">Search</button>
+
+<div id="msg">No matching drug found.</div>
+
+<table id="resultTable" style="display:none;">
+    <thead>
+        <tr>
+            <th>Procedure Code</th>
+            <th>Short Description</th>
+            <th>Labeler Name</th>
+            <th>NDC</th>
+            <th>Drug Name</th>
+            <th>HCPCS Dosage</th>
+            <th>PKG SIZE</th>
+            <th>PKG QTY</th>
+            <th>BILL UNITS</th>
+            <th>BILLUNITS PKG</th>
+        </tr>
+    </thead>
+    <tbody id="resultBody"></tbody>
+</table>
+
+<script>
+// CSV from GitHub
+const CSV_URL =
+  "https://raw.githubusercontent.com/kunalvaish49-cpu/Medical-Billing-Documents/main/NDC%20Lookup%20Tool.csv";
+
+let csvData = [];
+
+// Load CSV
+Papa.parse(CSV_URL, {
+    download: true,
+    header: true,
+    skipEmptyLines: true,
+    complete: function(results) {
+        csvData = results.data;
+        console.log("CSV Loaded:", csvData);
+    }
+});
+
+document.getElementById("btnSearch").addEventListener("click", searchDrug);
+
+function searchDrug() {
+    const code = document.getElementById("searchBox").value.trim().toUpperCase();
+    const msg = document.getElementById("msg");
+    const table = document.getElementById("resultTable");
+    const body = document.getElementById("resultBody");
+
+    msg.style.display = "none";
+    table.style.display = "none";
+    body.innerHTML = "";
+
+    if (!code) return;
+
+    // Get ALL matching rows
+    const matches = csvData.filter(
+        row => row["Procedure Code"]?.toUpperCase() === code
+    );
+
+    if (matches.length === 0) {
+        msg.style.display = "block";
+        return;
+    }
+
+    // Fill table with all matches
+    matches.forEach(match => {
+        const tr = document.createElement("tr");
+
+        const fields = [
+            "Procedure Code",
+            "Short Description",
+            "LABELER NAME",
+            "NDC",
+            "Drug Name",
+            "HCPCS dosage",
+            "PKG SIZE",
+            "PKG QTY",
+            "BILLUNITS",
+            "BILLUNITSPKG"
+        ];
+
+        fields.forEach(key => {
+            const td = document.createElement("td");
+            td.textContent = match[key] || "";
+            tr.appendChild(td);
+        });
+
+        body.appendChild(tr);
+    });
+
+    table.style.display = "table";
+}
+</script>
+
+</body>
+</html>
