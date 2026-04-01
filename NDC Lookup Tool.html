@@ -2,80 +2,170 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>NCD Drug Lookup Tool</title>
+<title>NDC / HCPCS Drug Lookup Tool</title>
 
-<!-- PapaParse for proper CSV parsing -->
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- PapaParse -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <style>
     body {
-        font-family: Arial, sans-serif;
-        padding: 40px;
-        background: #f4f6fc;
+        margin: 0;
+        font-family: "Inter", sans-serif;
+        background: #f4f7ff;
     }
+
+    /* Full-width top card */
+    .header-card {
+        width: 100%;
+        background: #ffffff;
+        padding: 40px 60px;
+        box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+        border-radius: 0 0 18px 18px;
+    }
+
     h1 {
-        color: #1847cc;
-        margin-bottom: 8px;
+        font-size: 34px;
+        color: #1b3ccb;
+        margin: 0 0 8px 0;
+        font-weight: 700;
     }
-    #searchBox {
-        padding: 12px;
-        width: 300px;
-        border: 2px solid #bfd1ff;
-        border-radius: 6px;
+
+    .subtitle {
+        color: #555;
         font-size: 16px;
-        margin-right: 8px;
+        margin-bottom: 25px;
     }
+
+    /* Search bar */
+    #searchBox {
+        padding: 14px;
+        width: 360px;
+        border: 2px solid #c9d6ff;
+        border-radius: 8px;
+        font-size: 16px;
+        outline: none;
+        transition: .2s;
+    }
+
+    #searchBox:focus {
+        border-color: #3557ff;
+        box-shadow: 0 0 6px rgba(53,87,255,0.3);
+    }
+
     #btnSearch {
-        padding: 12px 22px;
-        background: #1847cc;
-        color: white;
+        padding: 14px 26px;
+        background: #3557ff;
+        color: #fff;
         border: none;
-        font-weight: bold;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
+        font-weight: 600;
+        margin-left: 10px;
     }
+
     #btnSearch:hover {
-        background: #0d34a8;
+        background: #2646d8;
     }
+
+    /* Suggestion dropdown */
+    #suggestionBox {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        width: 360px;
+        max-height: 260px;
+        overflow-y: auto;
+        display: none;
+        margin-top: 5px;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        z-index: 20;
+    }
+
+    #suggestionBox div {
+        padding: 12px;
+        cursor: pointer;
+        font-size: 14px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    #suggestionBox div:hover {
+        background: #eef3ff;
+    }
+
+    /* Table layout */
+    .table-container {
+        width: 100%;
+        padding: 35px 60px;
+    }
+
     table {
-        margin-top: 28px;
         width: 100%;
         border-collapse: collapse;
-        background: #fff;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.10);
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
     }
-    th, td {
-        padding: 12px;
-        border: 1px solid #d9e1f5;
-        text-align: left;
-        font-size: 14px;
-    }
+
     th {
-        background: #e8edff;
-        font-weight: bold;
-        color: #1b2278;
+        background: #e6ecff;
+        padding: 14px;
+        font-size: 14px;
+        color: #0b1d7a;
+        font-weight: 600;
+        border-bottom: 2px solid #d3dbff;
+        white-space: nowrap;
     }
+
+    td {
+        padding: 12px;
+        font-size: 14px;
+        color: #333;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    tr:hover td {
+        background: #f7f9ff;
+    }
+
     #msg {
         margin-top: 18px;
-        color: red;
-        font-weight: bold;
+        padding: 12px;
+        background: #ffdede;
+        color: #b20000;
+        border-left: 4px solid #ff4b4b;
         display: none;
+        width: fit-content;
+        border-radius: 6px;
+        font-weight: 600;
     }
 </style>
-
 </head>
+
 <body>
 
-<h1>NCD Drug Lookup Tool</h1>
-<p>Enter Procedure / HCPCS / J‑Code:</p>
+<!-- Top Full-Width Header Card -->
+<div class="header-card">
+    <h1>NDC / HCPCS Drug Lookup Tool</h1>
+    <p class="subtitle">Search by Procedure Code, NDC, or Drug Name.</p>
 
-<input id="searchBox" placeholder="Example: J7327" />
-<button id="btnSearch">Search</button>
+    <div style="position:relative; display:inline-block;">
+        <input id="searchBox" placeholder="Type J-Code, NDC, or Drug Name..." />
+        <button id="btnSearch">Search</button>
+        <div id="suggestionBox"></div>
+    </div>
 
-<div id="msg">No matching drug found.</div>
+    <div id="msg">No matching drug found.</div>
+</div>
 
-<table id="resultTable" style="display:none;">
-    <thead>
+<!-- Results Table Section -->
+<div class="table-container">
+    <table id="resultTable" style="display:none;">
+        <thead>
         <tr>
             <th>Procedure Code</th>
             <th>Short Description</th>
@@ -83,19 +173,20 @@
             <th>NDC</th>
             <th>Drug Name</th>
             <th>HCPCS Dosage</th>
-            <th>PKG SIZE</th>
-            <th>PKG QTY</th>
-            <th>BILL UNITS</th>
-            <th>BILLUNITS PKG</th>
+            <th>PKG Size</th>
+            <th>PKG Qty</th>
+            <th>Bill Units</th>
+            <th>BillUnits PKG</th>
         </tr>
-    </thead>
-    <tbody id="resultBody"></tbody>
-</table>
+        </thead>
+        <tbody id="resultBody"></tbody>
+    </table>
+</div>
+
 
 <script>
-// CSV from GitHub
 const CSV_URL =
-  "https://raw.githubusercontent.com/kunalvaish49-cpu/Medical-Billing-Documents/main/NDC%20Lookup%20Tool.csv";
+ "https://raw.githubusercontent.com/kunalvaish49-cpu/Medical-Billing-Documents/main/NDC%20Lookup%20Tool.csv";
 
 let csvData = [];
 
@@ -106,12 +197,59 @@ Papa.parse(CSV_URL, {
     skipEmptyLines: true,
     complete: function(results) {
         csvData = results.data;
-        console.log("CSV Loaded:", csvData);
     }
 });
 
 document.getElementById("btnSearch").addEventListener("click", searchDrug);
+document.getElementById("searchBox").addEventListener("input", showSuggestions);
 
+
+// Auto-suggest logic
+function showSuggestions() {
+    const query = document.getElementById("searchBox").value.trim().toUpperCase();
+    const box = document.getElementById("suggestionBox");
+
+    if (!query) {
+        box.style.display = "none";
+        return;
+    }
+
+    const matches = csvData.filter(row => {
+        return (
+            row["Procedure Code"]?.toUpperCase().includes(query) ||
+            row["NDC"]?.toUpperCase().includes(query) ||
+            row["Drug Name"]?.toUpperCase().includes(query)
+        );
+    }).slice(0, 12);
+
+    if (matches.length === 0) {
+        box.style.display = "none";
+        return;
+    }
+
+    box.innerHTML = "";
+
+    matches.forEach(row => {
+        const item = document.createElement("div");
+        item.textContent =
+            `${row["Procedure Code"] || ""} | ${row["NDC"] || ""} | ${row["Drug Name"] || ""}`;
+
+        item.addEventListener("click", () => {
+            document.getElementById("searchBox").value =
+                row["Procedure Code"] || row["NDC"] || row["Drug Name"];
+
+            box.style.display = "none";
+            searchDrug();
+        });
+
+        box.appendChild(item);
+    });
+
+    box.style.display = "block";
+}
+
+
+// Search & display results
 function searchDrug() {
     const code = document.getElementById("searchBox").value.trim().toUpperCase();
     const msg = document.getElementById("msg");
@@ -124,17 +262,23 @@ function searchDrug() {
 
     if (!code) return;
 
-    // Get ALL matching rows
-    const matches = csvData.filter(
-        row => row["Procedure Code"]?.toUpperCase() === code
-    );
+    const matches = csvData.filter(row => {
+        const proc = row["Procedure Code"]?.toUpperCase() || "";
+        const ndc = row["NDC"]?.toUpperCase() || "";
+        const drug = row["Drug Name"]?.toUpperCase() || "";
+
+        return (
+            proc === code ||
+            ndc === code ||
+            drug.includes(code)
+        );
+    });
 
     if (matches.length === 0) {
         msg.style.display = "block";
         return;
     }
 
-    // Fill table with all matches
     matches.forEach(match => {
         const tr = document.createElement("tr");
 
@@ -166,3 +310,4 @@ function searchDrug() {
 
 </body>
 </html>
+``
