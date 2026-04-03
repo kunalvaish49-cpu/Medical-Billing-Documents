@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>NDC / HCPCS Drug Lookup Tool</title>
 
 <!-- Google Fonts -->
@@ -11,303 +12,968 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
 <style>
-    body {
-        margin: 0;
-        font-family: "Inter", sans-serif;
-        background: #f4f7ff;
-    }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* Full-width top card */
-    .header-card {
-        width: 100%;
-        background: #ffffff;
-        padding: 40px 60px;
-        box-shadow: 0 4px 25px rgba(0,0,0,0.08);
-        border-radius: 0 0 18px 18px;
-    }
+  :root {
+    --blue-50: #e8f0fe;
+    --blue-100: #c5d8fd;
+    --blue-500: #2563eb;
+    --blue-600: #1d4ed8;
+    --blue-700: #1e40af;
+    --blue-900: #1e3a8a;
+    --gray-50:  #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-500: #6b7280;
+    --gray-700: #374151;
+    --gray-900: #111827;
+    --green-50:  #f0fdf4;
+    --green-100: #dcfce7;
+    --green-600: #16a34a;
+    --red-50:   #fef2f2;
+    --red-100:  #fee2e2;
+    --red-600:  #dc2626;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 30px rgba(0,0,0,0.10);
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+  }
 
-    h1 {
-        font-size: 34px;
-        color: #1b3ccb;
-        margin: 0 0 8px 0;
-        font-weight: 700;
-    }
+  body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--gray-50);
+    color: var(--gray-900);
+    min-height: 100vh;
+  }
 
-    .subtitle {
-        color: #555;
-        font-size: 16px;
-        margin-bottom: 25px;
-    }
+  /* ── TOP HEADER ─────────────────────────────────── */
+  .header {
+    background: linear-gradient(135deg, var(--blue-900) 0%, var(--blue-700) 100%);
+    padding: 36px 40px 32px;
+    color: #fff;
+    width: 100%;
+  }
 
-    /* Search bar */
-    #searchBox {
-        padding: 14px;
-        width: 360px;
-        border: 2px solid #c9d6ff;
-        border-radius: 8px;
-        font-size: 16px;
-        outline: none;
-        transition: .2s;
-    }
+  .header-inner {
+    width: 100%;
+  }
 
-    #searchBox:focus {
-        border-color: #3557ff;
-        box-shadow: 0 0 6px rgba(53,87,255,0.3);
-    }
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    margin-bottom: 14px;
+    text-transform: uppercase;
+  }
 
-    #btnSearch {
-        padding: 14px 26px;
-        background: #3557ff;
-        color: #fff;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        margin-left: 10px;
-    }
+  .header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+  }
 
-    #btnSearch:hover {
-        background: #2646d8;
-    }
+  .header p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.75);
+    margin-bottom: 28px;
+  }
 
-    /* Suggestion dropdown */
-    #suggestionBox {
-        position: absolute;
-        background: white;
-        border: 1px solid #ddd;
-        width: 360px;
-        max-height: 260px;
-        overflow-y: auto;
-        display: none;
-        margin-top: 5px;
-        border-radius: 8px;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
-        z-index: 20;
-    }
+  /* ── SEARCH BAR ──────────────────────────────────── */
+  .search-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
 
-    #suggestionBox div {
-        padding: 12px;
-        cursor: pointer;
-        font-size: 14px;
-        border-bottom: 1px solid #f0f0f0;
-    }
+  .search-wrap {
+    position: relative;
+    flex: 1;
+    max-width: 700px;
+  }
 
-    #suggestionBox div:hover {
-        background: #eef3ff;
-    }
+  .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    color: rgba(255,255,255,0.6);
+    pointer-events: none;
+  }
 
-    /* Table layout */
-    .table-container {
-        width: 100%;
-        padding: 35px 60px;
-    }
+  #searchBox {
+    width: 100%;
+    padding: 13px 14px 13px 42px;
+    background: rgba(255,255,255,0.12);
+    border: 1.5px solid rgba(255,255,255,0.30);
+    border-radius: var(--radius-md);
+    font-size: 15px;
+    color: #fff;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    font-family: inherit;
+  }
 
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-    }
+  #searchBox::placeholder { color: rgba(255,255,255,0.55); }
+  #searchBox:focus {
+    border-color: rgba(255,255,255,0.70);
+    background: rgba(255,255,255,0.18);
+  }
 
-    th {
-        background: #e6ecff;
-        padding: 14px;
-        font-size: 14px;
-        color: #0b1d7a;
-        font-weight: 600;
-        border-bottom: 2px solid #d3dbff;
-        white-space: nowrap;
-    }
+  #btnSearch {
+    padding: 13px 26px;
+    background: #fff;
+    color: var(--blue-700);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 15px;
+    font-family: inherit;
+    white-space: nowrap;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
 
-    td {
-        padding: 12px;
-        font-size: 14px;
-        color: #333;
-        border-bottom: 1px solid #f0f0f0;
-    }
+  #btnSearch:hover  { background: var(--blue-50); box-shadow: var(--shadow-sm); }
+  #btnSearch:active { transform: scale(0.98); }
 
-    tr:hover td {
-        background: #f7f9ff;
-    }
+  #btnClear {
+    padding: 13px 18px;
+    background: rgba(255,255,255,0.10);
+    color: rgba(255,255,255,0.80);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 14px;
+    font-family: inherit;
+    display: none;
+    transition: background 0.15s;
+  }
+  #btnClear:hover { background: rgba(255,255,255,0.18); }
 
-    #msg {
-        margin-top: 18px;
-        padding: 12px;
-        background: #ffdede;
-        color: #b20000;
-        border-left: 4px solid #ff4b4b;
-        display: none;
-        width: fit-content;
-        border-radius: 6px;
-        font-weight: 600;
-    }
+  /* ── SUGGESTION DROPDOWN ─────────────────────────── */
+  #suggestionBox {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    max-height: 280px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+  }
+
+  .suggestion-header {
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--gray-100);
+    background: var(--gray-50);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+  }
+
+  .suggestion-item {
+    padding: 11px 14px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-100);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 0.12s;
+  }
+
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: var(--blue-50); }
+
+  .sug-code {
+    background: var(--blue-50);
+    color: var(--blue-600);
+    border-radius: var(--radius-sm);
+    padding: 2px 7px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    font-family: "Courier New", monospace;
+  }
+
+  .sug-ndc {
+    background: var(--gray-100);
+    color: var(--gray-700);
+    border-radius: var(--radius-sm);
+    padding: 2px 7px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    font-family: "Courier New", monospace;
+  }
+
+  .sug-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ── MAIN CONTENT ────────────────────────────────── */
+  .content {
+    width: 100%;
+    padding: 28px 40px 60px;
+  }
+
+  /* ── STATUS / ALERTS ─────────────────────────────── */
+  #statusArea { margin-bottom: 20px; }
+
+  .alert {
+    display: none;
+    padding: 14px 18px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .alert-error {
+    background: var(--red-50);
+    color: var(--red-600);
+    border: 1px solid var(--red-100);
+  }
+
+  .alert-loading {
+    background: var(--blue-50);
+    color: var(--blue-600);
+    border: 1px solid var(--blue-100);
+  }
+
+  .alert.visible { display: flex; }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid var(--blue-100);
+    border-top-color: var(--blue-600);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── RESULT META ─────────────────────────────────── */
+  #resultMeta {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .result-count {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+
+  .result-count span {
+    display: inline-block;
+    background: var(--blue-50);
+    color: var(--blue-700);
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
+
+  .query-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--gray-100);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 13px;
+    color: var(--gray-700);
+    font-weight: 500;
+  }
+
+  #btnExport {
+    padding: 8px 18px;
+    background: var(--green-50);
+    color: var(--green-600);
+    border: 1px solid var(--green-100);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: background 0.15s;
+  }
+  #btnExport:hover { background: var(--green-100); }
+
+  /* ── TABLE ───────────────────────────────────────── */
+  .table-wrapper {
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    display: none;
+    width: 100%;
+  }
+
+  .table-scroll { width: 100%; overflow-x: visible; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+  }
+
+  /* Column widths — tuned to fill full page */
+  col.c-code  { width: 9%; }
+  col.c-desc  { width: 14%; }
+  col.c-lab   { width: 14%; }
+  col.c-ndc   { width: 11%; }
+  col.c-drug  { width: 13%; }
+  col.c-dose  { width: 9%; }
+  col.c-psize { width: 6%; }
+  col.c-pqty  { width: 6%; }
+  col.c-bu    { width: 8%; }
+  col.c-bupkg { width: 10%; }
+
+  thead {
+    background: var(--gray-50);
+    border-bottom: 1.5px solid var(--gray-200);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+
+  th {
+    padding: 11px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--gray-500);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  th:first-child { border-radius: var(--radius-lg) 0 0 0; }
+  th:last-child  { border-radius: 0 var(--radius-lg) 0 0; }
+
+  td {
+    padding: 11px 10px;
+    border-bottom: 1px solid var(--gray-100);
+    color: var(--gray-700);
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--blue-50); }
+
+  /* Column-specific styles */
+  td.col-code {
+    font-family: "Courier New", monospace;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--blue-700);
+  }
+
+  td.col-ndc {
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    color: var(--gray-700);
+  }
+
+  td.col-drug {
+    font-weight: 600;
+    color: var(--gray-900);
+  }
+
+  td.col-desc {
+    color: var(--gray-500);
+    font-size: 12.5px;
+  }
+
+  td.col-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    color: var(--gray-700);
+  }
+
+  td.col-labeler {
+    font-size: 12.5px;
+    color: var(--gray-600);
+  }
+
+  .clamp {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
+
+  /* ── EMPTY STATE ─────────────────────────────────── */
+  .empty-state {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+  }
+
+  .empty-icon {
+    width: 52px; height: 52px;
+    background: var(--gray-100);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .empty-icon svg { width: 24px; height: 24px; color: var(--gray-400); }
+
+  .empty-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: 6px;
+  }
+
+  .empty-sub {
+    font-size: 14px;
+    color: var(--gray-500);
+  }
+
+  /* ── LOADING STATE ───────────────────────────────── */
+  #loadingOverlay {
+    display: none;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    color: var(--gray-500);
+    font-size: 14px;
+  }
+
+  /* ── PAGINATION ──────────────────────────────────── */
+  .pagination {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+  }
+
+  .page-btn {
+    padding: 7px 13px;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    background: #fff;
+    color: var(--gray-700);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .page-btn:hover { background: var(--gray-100); }
+  .page-btn.active {
+    background: var(--blue-500);
+    color: #fff;
+    border-color: var(--blue-500);
+    font-weight: 600;
+  }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* ── COLUMN FILTER ───────────────────────────────── */
+  .filter-row {
+    display: none;
+    gap: 10px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+
+  .filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    background: #fff;
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--gray-600);
+    transition: all 0.12s;
+    font-family: inherit;
+  }
+
+  .filter-chip.on {
+    background: var(--blue-50);
+    border-color: var(--blue-500);
+    color: var(--blue-700);
+    font-weight: 500;
+  }
+
+  /* ── FOOTER ──────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 28px;
+    font-size: 12px;
+    color: var(--gray-400);
+    border-top: 1px solid var(--gray-200);
+    background: #fff;
+  }
+
+  /* ── RESPONSIVE ──────────────────────────────────── */
+  @media (max-width: 900px) {
+    .header   { padding: 24px 20px 20px; }
+    .content  { padding: 20px 16px 40px; }
+    .header h1 { font-size: 22px; }
+    #searchBox { font-size: 14px; }
+    table { font-size: 11px; }
+    th, td { padding: 9px 7px; }
+  }
 </style>
 </head>
 
 <body>
 
-<!-- Top Full-Width Header Card -->
-<div class="header-card">
-    <h1>NDC / HCPCS Drug Lookup Tool</h1>
-    <p class="subtitle">Search by Procedure Code, NDC, or Drug Name.</p>
-
-    <div style="position:relative; display:inline-block;">
-        <input id="searchBox" placeholder="Type J-Code, NDC, or Drug Name..." />
-        <button id="btnSearch">Search</button>
-        <div id="suggestionBox"></div>
+<!-- ── HEADER ─────────────────────────────────────────── -->
+<div class="header" id="pageHeader">
+  <div class="header-inner">
+    <div class="header-badge">
+      <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
+        <circle cx="5" cy="5" r="5"/>
+      </svg>
+      Medical Billing Reference
     </div>
+    <h1>NDC / HCPCS Drug Lookup Tool</h1>
+    <p>Search by J-Code / Procedure Code, NDC, or Drug Name</p>
 
-    <div id="msg">No matching drug found.</div>
+    <div class="search-row" role="search">
+      <div class="search-wrap">
+        <!-- Search icon -->
+        <svg class="search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8.5" cy="8.5" r="5.5"/><line x1="13" y1="13" x2="18" y2="18"/>
+        </svg>
+
+        <input
+          id="searchBox"
+          type="search"
+          placeholder="Type J-Code, NDC, or Drug Name…"
+          autocomplete="off"
+          aria-label="Search by Procedure Code, NDC or Drug Name"
+          data-testid="drug-search-input"
+        />
+
+        <!-- Suggestion Dropdown -->
+        <div id="suggestionBox" role="listbox" aria-label="Search suggestions" data-testid="suggestion-box">
+          <div class="suggestion-header">Suggestions</div>
+        </div>
+      </div>
+
+      <button id="btnSearch" aria-label="Search" data-testid="search-button">Search</button>
+      <button id="btnClear"  aria-label="Clear results" data-testid="clear-button">Clear</button>
+    </div>
+  </div>
 </div>
 
-<!-- Results Table Section -->
-<div class="table-container">
-    <table id="resultTable" style="display:none;">
+<!-- ── MAIN CONTENT ──────────────────────────────────── -->
+<div class="content">
+
+  <!-- Status alerts -->
+  <div id="statusArea">
+    <div id="alertLoading" class="alert alert-loading" role="status" data-testid="loading-alert">
+      <div class="spinner"></div>
+      <span>Loading drug database…</span>
+    </div>
+    <div id="alertError" class="alert alert-error" role="alert" data-testid="error-alert">
+      <svg width="16" height="16" fill="none" viewBox="0 0 20 20" stroke="currentColor" stroke-width="2">
+        <circle cx="10" cy="10" r="8"/><line x1="10" y1="6" x2="10" y2="11"/><circle cx="10" cy="14" r="0.8" fill="currentColor"/>
+      </svg>
+      <span id="alertErrorMsg">No matching drug found.</span>
+    </div>
+  </div>
+
+  <!-- Result meta bar -->
+  <div id="resultMeta" role="status" data-testid="result-meta">
+    <div class="result-count">
+      Results <span id="resultCount">0</span> for
+      <span class="query-tag" id="queryTag"></span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button id="btnExport" aria-label="Export results to CSV" data-testid="export-button">&#8659; Export CSV</button>
+    </div>
+  </div>
+
+  <!-- Loading overlay (while searching) -->
+  <div id="loadingOverlay" data-testid="table-loading">
+    <div class="spinner" style="margin:0 auto 12px;width:24px;height:24px;border-width:3px;"></div>
+    Searching…
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper" id="tableWrapper" data-testid="result-table-wrapper">
+    <div class="table-scroll">
+      <table id="resultTable" aria-label="Drug lookup results">
+        <colgroup>
+          <col class="c-code">
+          <col class="c-desc">
+          <col class="c-lab">
+          <col class="c-ndc">
+          <col class="c-drug">
+          <col class="c-dose">
+          <col class="c-psize">
+          <col class="c-pqty">
+          <col class="c-bu">
+          <col class="c-bupkg">
+        </colgroup>
         <thead>
-        <tr>
-            <th>Procedure Code</th>
-            <th>Short Description</th>
-            <th>Labeler Name</th>
-            <th>NDC</th>
-            <th>Drug Name</th>
-            <th>HCPCS Dosage</th>
-            <th>PKG Size</th>
-            <th>PKG Qty</th>
-            <th>Bill Units</th>
-            <th>BillUnits PKG</th>
-        </tr>
+          <tr>
+            <th data-col="Procedure Code">Procedure Code</th>
+            <th data-col="Short Description">Description</th>
+            <th data-col="LABELER NAME">Labeler</th>
+            <th data-col="NDC">NDC</th>
+            <th data-col="Drug Name">Drug Name</th>
+            <th data-col="HCPCS dosage">HCPCS Dosage</th>
+            <th data-col="PKG SIZE">Pkg Size</th>
+            <th data-col="PKG QTY">Pkg Qty</th>
+            <th data-col="BILLUNITS">Bill Units</th>
+            <th data-col="BILLUNITSPKG">Bill Units/Pkg</th>
+          </tr>
         </thead>
         <tbody id="resultBody"></tbody>
-    </table>
+      </table>
+    </div>
+
+    <!-- Empty state inside table wrapper -->
+    <div class="empty-state" id="emptyState" data-testid="empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+      </div>
+      <div class="empty-title">No results found</div>
+      <div class="empty-sub" id="emptySubMsg">Try a different J-Code, NDC, or drug name.</div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" id="pagination" role="navigation" aria-label="Results pagination" data-testid="pagination">
+    <button class="page-btn" id="btnPrev" data-testid="page-prev">&#8592; Prev</button>
+    <span id="pageIndicator" style="font-size:13px;color:var(--gray-500);padding:0 4px;"></span>
+    <button class="page-btn" id="btnNext" data-testid="page-next">Next &#8594;</button>
+  </div>
+
 </div>
 
+<!-- ── FOOTER ────────────────────────────────────────── -->
+<div class="footer">
+  NDC / HCPCS Drug Lookup &mdash; Data sourced from public reference files &bull; For billing reference only
+</div>
 
+<!-- ── SCRIPT ────────────────────────────────────────── -->
 <script>
 const CSV_URL =
- "https://raw.githubusercontent.com/kunalvaish49-cpu/Medical-Billing-Documents/main/NDC%20Lookup%20Tool.csv";
+  "https://raw.githubusercontent.com/kunalvaish49-cpu/Medical-Billing-Documents/main/NDC%20Lookup%20Tool.csv";
 
-let csvData = [];
+/* ── Exact column names as they appear in the CSV (case-sensitive) ── */
+const FIELDS = [
+  "Procedure Code",
+  "Short Description",
+  "LABELER NAME",
+  "NDC",
+  "Drug Name",
+  "HCPCS dosage",
+  "PKG SIZE",
+  "PKG QTY",
+  "BILLUNITS",
+  "BILLUNITSPKG"
+];
 
-// Load CSV
+/* Map display headers to CSV keys */
+const FIELD_LABELS = {
+  "Procedure Code":  "Procedure Code",
+  "Short Description": "Description",
+  "LABELER NAME":    "Labeler",
+  "NDC":             "NDC",
+  "Drug Name":       "Drug Name",
+  "HCPCS dosage":   "HCPCS Dosage",
+  "PKG SIZE":        "Pkg Size",
+  "PKG QTY":        "Pkg Qty",
+  "BILLUNITS":       "Bill Units",
+  "BILLUNITSPKG":    "Bill Units/Pkg"
+};
+
+const PAGE_SIZE = 50;
+
+let csvData      = [];
+let currentPage  = 1;
+let allMatches   = [];
+let dbLoaded     = false;
+
+/* ── helpers ─────────────────────── */
+const $  = id => document.getElementById(id);
+const el = id => document.getElementById(id);
+
+function showAlert(id, show, msg) {
+  const a = el(id);
+  a.classList.toggle("visible", show);
+  if (msg && id === "alertError") el("alertErrorMsg").textContent = msg;
+}
+
+/* ── Load CSV ─────────────────────── */
+showAlert("alertLoading", true);
+
 Papa.parse(CSV_URL, {
-    download: true,
-    header: true,
-    skipEmptyLines: true,
-    complete: function(results) {
-        csvData = results.data;
-    }
+  download: true,
+  header: true,
+  skipEmptyLines: true,
+  complete(results) {
+    csvData = results.data.map(row => {
+      const n = {};
+      Object.keys(row).forEach(k => { n[k.trim()] = (row[k] || "").trim(); });
+      return n;
+    });
+    dbLoaded = true;
+    showAlert("alertLoading", false);
+  },
+  error() {
+    showAlert("alertLoading", false);
+    showAlert("alertError", true, "Failed to load database. Please refresh the page.");
+  }
 });
 
-document.getElementById("btnSearch").addEventListener("click", searchDrug);
-document.getElementById("searchBox").addEventListener("input", showSuggestions);
+/* ── Suggestions ─────────────────── */
+el("searchBox").addEventListener("input", showSuggestions);
+el("searchBox").addEventListener("keydown", e => {
+  if (e.key === "Enter") { hideSuggestions(); doSearch(); }
+  if (e.key === "Escape") hideSuggestions();
+});
 
+document.addEventListener("click", e => {
+  if (!el("suggestionBox").contains(e.target) && e.target !== el("searchBox")) hideSuggestions();
+});
 
-// Auto-suggest logic
+function hideSuggestions() { el("suggestionBox").style.display = "none"; }
+
 function showSuggestions() {
-    const query = document.getElementById("searchBox").value.trim().toUpperCase();
-    const box = document.getElementById("suggestionBox");
+  const q = el("searchBox").value.trim().toUpperCase();
+  const box = el("suggestionBox");
+  if (!q || q.length < 2) { box.style.display = "none"; return; }
 
-    if (!query) {
-        box.style.display = "none";
-        return;
-    }
+  const qClean = q.replace(/-/g, "");
+  const seen = new Set();
+  const matches = csvData.filter(row => {
+    const proc  = (row["Procedure Code"] || "").toUpperCase();
+    const ndc   = (row["NDC"] || "").toUpperCase().replace(/-/g, "");
+    const drug  = (row["Drug Name"] || "").toUpperCase();
+    const hit   = proc.includes(qClean) || ndc.includes(qClean) || drug.includes(q);
+    if (!hit) return false;
+    const key   = proc + "|" + ndc;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 10);
 
-    const matches = csvData.filter(row => {
-        return (
-            row["Procedure Code"]?.toUpperCase().includes(query) ||
-            row["NDC"]?.toUpperCase().includes(query) ||
-            row["Drug Name"]?.toUpperCase().includes(query)
-        );
-    }).slice(0, 12);
+  if (!matches.length) { box.style.display = "none"; return; }
 
-    if (matches.length === 0) {
-        box.style.display = "none";
-        return;
-    }
+  // Rebuild suggestion items (keep header)
+  const items = box.querySelectorAll(".suggestion-item");
+  items.forEach(i => i.remove());
 
-    box.innerHTML = "";
-
-    matches.forEach(row => {
-        const item = document.createElement("div");
-        item.textContent =
-            `${row["Procedure Code"] || ""} | ${row["NDC"] || ""} | ${row["Drug Name"] || ""}`;
-
-        item.addEventListener("click", () => {
-            document.getElementById("searchBox").value =
-                row["Procedure Code"] || row["NDC"] || row["Drug Name"];
-
-            box.style.display = "none";
-            searchDrug();
-        });
-
-        box.appendChild(item);
+  matches.forEach(row => {
+    const item = document.createElement("div");
+    item.className = "suggestion-item";
+    item.setAttribute("role", "option");
+    item.setAttribute("data-testid", "suggestion-item");
+    item.innerHTML =
+      `<span class="sug-code">${row["Procedure Code"] || "—"}</span>` +
+      `<span class="sug-ndc">${row["NDC"] || "—"}</span>` +
+      `<span class="sug-name">${row["Drug Name"] || ""}</span>`;
+    item.addEventListener("click", () => {
+      el("searchBox").value = row["Procedure Code"] || row["NDC"] || row["Drug Name"];
+      hideSuggestions();
+      doSearch();
     });
+    box.appendChild(item);
+  });
 
-    box.style.display = "block";
+  box.style.display = "block";
 }
 
+/* ── Search ──────────────────────── */
+el("btnSearch").addEventListener("click", () => { hideSuggestions(); doSearch(); });
+el("btnClear").addEventListener("click", clearResults);
 
-// Search & display results
-function searchDrug() {
-    const code = document.getElementById("searchBox").value.trim().toUpperCase();
-    const msg = document.getElementById("msg");
-    const table = document.getElementById("resultTable");
-    const body = document.getElementById("resultBody");
+function doSearch() {
+  if (!dbLoaded) { showAlert("alertError", true, "Database is still loading, please wait."); return; }
 
-    msg.style.display = "none";
-    table.style.display = "none";
-    body.innerHTML = "";
+  const raw   = el("searchBox").value.trim();
+  const q     = raw.toUpperCase();
+  const qClean = q.replace(/-/g, "");
 
-    if (!code) return;
+  showAlert("alertError", false);
+  hideTable();
 
-    const matches = csvData.filter(row => {
-        const proc = row["Procedure Code"]?.toUpperCase() || "";
-        const ndc = row["NDC"]?.toUpperCase() || "";
-        const drug = row["Drug Name"]?.toUpperCase() || "";
+  if (!q) return;
 
-        return (
-            proc === code ||
-            ndc === code ||
-            drug.includes(code)
-        );
+  el("loadingOverlay").style.display = "block";
+
+  // Small timeout so the spinner renders before blocking JS
+  setTimeout(() => {
+    allMatches = csvData.filter(row => {
+      const proc = (row["Procedure Code"] || "").toUpperCase();
+      const ndc  = (row["NDC"] || "").toUpperCase().replace(/-/g, "");
+      const drug = (row["Drug Name"] || "").toUpperCase();
+      return proc.includes(qClean) || ndc.includes(qClean) || drug.includes(q);
     });
 
-    if (matches.length === 0) {
-        msg.style.display = "block";
-        return;
+    el("loadingOverlay").style.display = "none";
+
+    if (!allMatches.length) {
+      showAlert("alertError", true, `No results found for "${raw}". Try a different J-Code, NDC, or drug name.`);
+      el("btnClear").style.display = "inline-block";
+      return;
     }
 
-    matches.forEach(match => {
-        const tr = document.createElement("tr");
-
-        const fields = [
-            "Procedure Code",
-            "Short Description",
-            "LABELER NAME",
-            "NDC",
-            "Drug Name",
-            "HCPCS dosage",
-            "PKG SIZE",
-            "PKG QTY",
-            "BILLUNITS",
-            "BILLUNITSPKG"
-        ];
-
-        fields.forEach(key => {
-            const td = document.createElement("td");
-            td.textContent = match[key] || "";
-            tr.appendChild(td);
-        });
-
-        body.appendChild(tr);
-    });
-
-    table.style.display = "table";
+    currentPage = 1;
+    renderPage();
+    el("btnClear").style.display = "inline-block";
+  }, 30);
 }
+
+function clearResults() {
+  el("searchBox").value = "";
+  el("btnClear").style.display = "none";
+  showAlert("alertError", false);
+  hideTable();
+  allMatches = [];
+}
+
+/* ── Render table page ────────────── */
+function renderPage() {
+  const start  = (currentPage - 1) * PAGE_SIZE;
+  const end    = Math.min(start + PAGE_SIZE, allMatches.length);
+  const page   = allMatches.slice(start, end);
+  const body   = el("resultBody");
+  body.innerHTML = "";
+
+  page.forEach((row, idx) => {
+    const tr = document.createElement("tr");
+    tr.setAttribute("data-testid", "result-row");
+    tr.setAttribute("data-row-index", start + idx);
+
+    FIELDS.forEach((key, fi) => {
+      const td = document.createElement("td");
+      const val = row[key] || "";
+      td.setAttribute("data-col", key);
+      td.setAttribute("data-testid", "cell-" + key.toLowerCase().replace(/ /g, "-"));
+
+      if      (fi === 0) { td.className = "col-code"; td.textContent = val; }
+      else if (fi === 1) { td.className = "col-desc"; const s = document.createElement("span"); s.className = "clamp"; s.title = val; s.textContent = val; td.appendChild(s); }
+      else if (fi === 2) { td.className = "col-labeler"; const s = document.createElement("span"); s.className = "clamp"; s.title = val; s.textContent = val; td.appendChild(s); }
+      else if (fi === 3) { td.className = "col-ndc"; td.textContent = val; }
+      else if (fi === 4) { td.className = "col-drug"; const s = document.createElement("span"); s.className = "clamp"; s.title = val; s.textContent = val; td.appendChild(s); }
+      else if (fi >= 6 && fi <= 9) { td.className = "col-num"; td.textContent = val; }
+      else { td.textContent = val; }
+
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+
+  /* empty state */
+  el("emptyState").style.display = page.length === 0 ? "flex" : "none";
+
+  /* meta bar */
+  const meta = el("resultMeta");
+  meta.style.display = "flex";
+  el("resultCount").textContent = allMatches.length.toLocaleString();
+  el("queryTag").textContent = el("searchBox").value.trim();
+
+  /* table */
+  el("tableWrapper").style.display = "block";
+
+  /* pagination */
+  const totalPages = Math.ceil(allMatches.length / PAGE_SIZE);
+  const pag = el("pagination");
+  if (totalPages > 1) {
+    pag.style.display = "flex";
+    el("pageIndicator").textContent = `Page ${currentPage} of ${totalPages}`;
+    el("btnPrev").disabled = currentPage === 1;
+    el("btnNext").disabled = currentPage === totalPages;
+  } else {
+    pag.style.display = "none";
+  }
+}
+
+function hideTable() {
+  el("resultMeta").style.display   = "none";
+  el("tableWrapper").style.display = "none";
+  el("pagination").style.display   = "none";
+}
+
+/* ── Pagination ──────────────────── */
+el("btnPrev").addEventListener("click", () => { if (currentPage > 1) { currentPage--; renderPage(); scrollToContent(); } });
+el("btnNext").addEventListener("click", () => {
+  if (currentPage < Math.ceil(allMatches.length / PAGE_SIZE)) { currentPage++; renderPage(); scrollToContent(); }
+});
+
+function scrollToContent() {
+  el("tableWrapper").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ── Export CSV ──────────────────── */
+el("btnExport").addEventListener("click", () => {
+  if (!allMatches.length) return;
+  const rows = [FIELDS.join(",")];
+  allMatches.forEach(row => {
+    rows.push(FIELDS.map(f => `"${(row[f] || "").replace(/"/g, '""')}"`).join(","));
+  });
+  const blob = new Blob([rows.join("\n")], { type: "text/csv" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "ndc_hcpcs_results.csv"; a.click();
+  URL.revokeObjectURL(url);
+});
 </script>
 
 </body>
 </html>
-``
